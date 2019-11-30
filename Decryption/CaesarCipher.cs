@@ -1,4 +1,3 @@
-using System;
 using System.IO;
 using System.Linq;
 using TessOfThedUrbervilles.Analysis;
@@ -31,8 +30,8 @@ namespace TessOfThedUrbervilles
             // Apply decrypt formula
             var decryptedCharArray = characterFrequency.Characters.Select(x => WrapCharacter(x - (shifts % 26)) ).ToArray();
             var decryptedString = new string(decryptedCharArray);
-            
-            return decryptedString.Substring(0, 30);
+
+            return originalCharacterFrequency.OriginalText.Contains(decryptedString) ? decryptedString.Substring(0, 30) : "Failed";
         }
         
         private static char WrapCharacter(int character)

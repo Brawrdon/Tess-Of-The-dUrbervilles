@@ -31,7 +31,10 @@ namespace TessOfThedUrbervilles
             var tess27CharacterFrequency = new CharacterFrequency(tess27Text);
 
             // Decrypt
-            Console.WriteLine("Ceasear: " + CaesarCipher.Decrypt(tess26CharacterFrequency) + "\n\n");
+            Console.WriteLine("Ceasear: " + CaesarCipher.Decrypt(tess26CharacterFrequency) + "\n");
+            Console.WriteLine("Vigenere With Key: " + VigenereCipher.DecryptWithKey(tess26CharacterFrequency) + "\n");
+            Console.WriteLine("Vigenere Without Key: " + VigenereCipher.DecryptWithoutKey(tess26CharacterFrequency) + "\n");
+
         }
         
     }
