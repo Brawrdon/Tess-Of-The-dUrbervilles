@@ -29,19 +29,18 @@ namespace TessOfThedUrbervilles
 
             
             // Apply decrypt formula
-            var decryptedIntArray = characterFrequency.Characters.Select(x => Modulas(x - (shifts % 26)) ).ToArray();
-            var decryptedStringArray = Array.ConvertAll(decryptedIntArray, x => (char) x);
-            var decryptedString = string.Join("", decryptedStringArray);
+            var decryptedCharArray = characterFrequency.Characters.Select(x => WrapCharacter(x - (shifts % 26)) ).ToArray();
+            var decryptedString = new string(decryptedCharArray);
             
             return decryptedString.Substring(0, 30);
         }
         
-        private static int Modulas(int input)
+        private static char WrapCharacter(int character)
         {
-            const int aCharValue = 65;
-            const int zCharValue = 91; // Z is actually 90 but this modula formula wraps from aCharValue to zCharValue - 1
-            return (((input - aCharValue) % (zCharValue - aCharValue)) + (zCharValue - aCharValue)) % (zCharValue - aCharValue) + aCharValue;
+            if (character < 65)
+                character += 26;
 
+            return (char) character;
         }
         
         
