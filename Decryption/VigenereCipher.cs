@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -11,12 +12,13 @@ namespace TessOfThedUrbervilles
 
         public string Triad { get; }
         public List<Spacing> Spaces { get; }
-
+        
         public Sequence(string triad)
         {
             Triad = triad;
             Spaces = new List<Spacing>();
         }
+        
     }
     
     public class Spacing
@@ -59,9 +61,9 @@ namespace TessOfThedUrbervilles
             return originalCharacterFrequency.OriginalText.Contains(decryptedString) ? decryptedString.Substring(0, 30) : "Failed";
         }
 
-        public static string DecryptWithoutKey(CharacterFrequency originalCharacterFrequency)
+        public static string DecryptWithoutKey(CharacterFrequency originalCharacterFrequency, string file)
         {
-            var text = File.ReadAllText("cexercise3.txt");
+            var text = File.ReadAllText(file);
             var characterFrequency = new CharacterFrequency(text);
             
             var sequences = new List<Sequence>();
@@ -138,18 +140,91 @@ namespace TessOfThedUrbervilles
             
             var keySize = frequencies.Aggregate((x, y) => x.Value > y.Value ? x : y).Key;           
 
+            // Split text into segments of the size of the key
+            var sequencesInOrder = sequences.OrderByDescending(x => x.Spaces.Count);
 
-            return "";
+            var keysForThe = new List<string>();
+            var keysForAnd = new List<string>();
 
+            foreach (var sequence in sequencesInOrder)
+            {
+                var sequenceCharArray = sequence.Triad.ToCharArray();
+
+                var firstChar = sequenceCharArray[0];
+                var secondChar = sequenceCharArray[1];
+                var thirdChar = sequenceCharArray[2];
+                
+                var possibleKeyOne = GetPossibleCharacter(firstChar, 'T');
+                var possibleKeyTwo =  GetPossibleCharacter(secondChar, 'H');
+                var possibleKeyThree = GetPossibleCharacter(thirdChar, 'E');
+                
+                var keyCharArray = new [] {possibleKeyOne, possibleKeyTwo, possibleKeyThree};
+                keysForThe.Add(new string(keyCharArray));
+                
+                possibleKeyOne = GetPossibleCharacter(firstChar, 'A');
+                possibleKeyTwo =  GetPossibleCharacter(secondChar, 'N');
+                possibleKeyThree = GetPossibleCharacter(thirdChar, 'D');
+                
+                keyCharArray = new [] {possibleKeyOne, possibleKeyTwo, possibleKeyThree};
+                keysForAnd.Add(new string(keyCharArray));
+
+            }
+
+            var possibleKeys = (from theKey in keysForThe from andKey in keysForAnd select theKey + andKey).ToList();
+            var segments = GetSegments(characterFrequency.OriginalText, keySize);
+
+            foreach (var possibleKey in possibleKeys)
+            {
+                // Segment original text into key size.
+
+                string decrypted = "";
+                var keyIndex = 0;
+                foreach (var originalInSegment in segments)
+                {
+                    // Get array of characters
+                    decrypted += new string(GetPossibleCharacters(originalInSegment.ToCharArray(), possibleKey.ToCharArray()));
+                }
+
+                if (originalCharacterFrequency.OriginalText.Contains(decrypted))
+                    return decrypted.Substring(0, 30);
+
+            }
+
+            return "Failed";
+        }
+
+        private static List<string> GetSegments(string text, int keySize)
+        {
+            return text.Select((c, i) => new { Char = c, Index = i }).GroupBy(o => o.Index / keySize).Select(g => new string(g.Select(o => o.Char).ToArray())).ToList();
+        }
+
+
+        private static char[] GetPossibleCharacters(char[] encryptedCharArray, char[] keyCharArray)
+        {
+            var translatedBlock = new char[encryptedCharArray.Length];
+            for (var i = 0; i < encryptedCharArray.Length; i++)
+            {
+                translatedBlock[i] = GetPossibleCharacter(encryptedCharArray[i], keyCharArray[i]);
+            }
+
+            return translatedBlock;
         }
 
         
+        private static char GetPossibleCharacter(char encryptedChar, char keyChar)
+        {
+            var difference = encryptedChar - keyChar;
+            return difference < 0 ? WrapCharacter(91 - Math.Abs(difference)) : WrapCharacter(65 + difference);
+        }
         
         private static char WrapCharacter(int character)
         {
             if (character < 65)
                 character += 26;
 
+            if (character > 90)
+                character -= 26;
+            
             return (char) character;
         }
 
