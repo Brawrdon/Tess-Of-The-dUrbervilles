@@ -164,23 +164,41 @@ namespace TessOfThedUrbervilles
                 possibleKeyOne = GetPossibleCharacter(firstChar, 'A');
                 possibleKeyTwo =  GetPossibleCharacter(secondChar, 'N');
                 possibleKeyThree = GetPossibleCharacter(thirdChar, 'D');
+
+                switch (keySize)
+                {
+                    case 4:
+                        keyCharArray = new [] {possibleKeyOne};
+                        break;
+                    case 5:
+                        keyCharArray = new [] {possibleKeyOne, possibleKeyTwo};
+                        break;
+                    default:
+                        keyCharArray = new [] {possibleKeyOne, possibleKeyTwo, possibleKeyThree};
+                        break;
+                }
                 
-                keyCharArray = new [] {possibleKeyOne, possibleKeyTwo, possibleKeyThree};
                 keysForAnd.Add(new string(keyCharArray));
+
 
             }
 
+   
             var possibleKeys = (from theKey in keysForThe from andKey in keysForAnd select theKey + andKey).ToList();
+            possibleKeys.AddRange((from theKey in keysForThe from andKey in keysForAnd select  andKey + theKey).ToList());
+            
             var segments = GetSegments(characterFrequency.OriginalText, keySize);
+
 
             foreach (var possibleKey in possibleKeys)
             {
                 // Segment original text into key size.
 
-                string decrypted = "";
+                var decrypted = "";
                 var keyIndex = 0;
                 foreach (var originalInSegment in segments)
                 {
+                    
                     // Get array of characters
                     decrypted += new string(GetPossibleCharacters(originalInSegment.ToCharArray(), possibleKey.ToCharArray()));
                 }
