@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -23,25 +24,52 @@ namespace TessOfThedUrbervilles
             foreach (var possibleColumnSize in possibleColumnSizes)
             {
                 var decryptedText = "";
-                float rowLength = cipherText.OriginalText.Length / possibleColumnSize;
-                var grid = GenerateGrid(cipherText.OriginalText, (int) Math.Ceiling(rowLength));
+                float rowLengthFloat = cipherText.OriginalText.Length / possibleColumnSize;
+                var rowLength = (int) Math.Ceiling(rowLengthFloat);
+                var grid = GenerateGrid(cipherText.OriginalText, rowLength);
 
-                for (int i = 0; i < grid.Count(); i++)
+                for (int i = 0; i < rowLength; i++)
                 {
-                    var columnIndex = i % (possibleColumnSize + 1);
-                    decryptedText += ReadColumn(columnIndex, grid);
+                    decryptedText += ReadColumn(i, grid);
                 }
 
-                if (plainText.OriginalText.Contains(decryptedText)) 
-                    return decryptedText;
+                if (plainText.OriginalText.Contains(decryptedText))
+                    return decryptedText.Substring(0, 30);;
 
             }
 
             return "Failed";
 
         }
+        
+        public static string DecryptOrderUnknown(Text plainText)
+        {
+            var cipherTextString = File.ReadAllText("cexercise6.txt");
+            var cipherText = new Text(cipherTextString);
+            
+            var decryptedText = "";
+            float rowLength = cipherText.OriginalText.Length / 6;
+            var grid = GenerateGrid(cipherText.OriginalText, (int) Math.Ceiling(rowLength));
 
-        private static string ReadColumn(int columnIndex, List<string> grid)
+            var gridPermutations = GenerateGridPermutations(grid);
+
+            foreach (var gridPermutation in gridPermutations)
+            {
+                for (int i = 0; i < rowLength; i++)
+                {
+                    decryptedText += ReadColumn(i, gridPermutation);
+                }
+
+                if (plainText.OriginalText.Contains(decryptedText))
+                    return decryptedText.Substring(0, 30);;
+                
+                decryptedText = "";
+            }
+            
+            return "Failed";
+        }
+
+        private static string ReadColumn(int columnIndex, IEnumerable<string> grid)
         {
             var text = "";
             foreach (var row in grid)
@@ -56,12 +84,17 @@ namespace TessOfThedUrbervilles
         {
             return text.Select((c, i) => new { Char = c, Index = i }).GroupBy(o => o.Index / rowLength).Select(g => new string(g.Select(o => o.Char).ToArray())).ToList();
         }
+        
+        private static IEnumerable<IEnumerable<string>> GenerateGridPermutations(List<string> grid)
+        {
+            return GetPermutations(grid, 6).ToList();
+        }
 
-        
-        
-        // If you don't know the order and know the keysize
-        // Divide by the cipher text by the keysize
-        // 
+        private static IEnumerable<IEnumerable<T>> GetPermutations<T>(IEnumerable<T> list, int length)
+        {
+            return length == 1 ? list.Select(t => new T[] { t }) : GetPermutations(list, length - 1).SelectMany(t => list.Where(e => !t.Contains(e)),(t1, t2) => t1.Concat(new T[] { t2 }));
+        }
+
 
         
     }

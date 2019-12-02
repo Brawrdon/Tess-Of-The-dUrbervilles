@@ -47,7 +47,7 @@ namespace TessOfThedUrbervilles
 
             var keyLength = FindPossibleKeyLength(spaces);
 
-            var possibleKeys = FindPossibleKeys(plainText, duplicateTriads, keyLength);
+            var possibleKeys = FindPossibleKeys(duplicateTriads, keyLength);
 
             foreach (var possibleKey in possibleKeys)
             {
@@ -141,24 +141,18 @@ namespace TessOfThedUrbervilles
             return mostOccurred == modFiveOccurrences ? 5 : 6;
         }
 
-        private static List<string> FindPossibleKeys(Text plantText, List<IGrouping<string, Triad>> cipherTextTriads, int keyLength)
+        private static List<string> FindPossibleKeys(List<IGrouping<string, Triad>> cipherTextTriads, int keyLength)
         {
             var possibleKeysFirstSection = new List<string>();
             var possibleKeysSecondSection = new List<string>();
-
-            var plainTextTriads = GenerateTriads(plantText);
-
-            var plainTextDuplicateTriads = plainTextTriads.GroupBy(x => x.Text).Where(x => x.Count() > 1).OrderByDescending(x => x.Count()).ToList();
-
-            var commonWordOne = plainTextDuplicateTriads[0].Key;
-            var commonWordTwo = plainTextDuplicateTriads[1].Key;
+            
 
             var triads = cipherTextTriads.SelectMany(x => x).ToList();
 
             foreach (var triad in triads)
             {
-                var keySectionOne = GetKeySection(triad, 3, commonWordOne);
-                var keySectionTwo = GetKeySection(triad, Math.Abs(3 - keyLength), commonWordTwo);
+                var keySectionOne = GetKeySection(triad, 3, "THE");
+                var keySectionTwo = GetKeySection(triad, Math.Abs(3 - keyLength), "AND");
             
                 possibleKeysFirstSection.Add(keySectionOne);
                 possibleKeysSecondSection.Add(keySectionTwo);
