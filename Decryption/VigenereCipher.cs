@@ -2,233 +2,187 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
 using TessOfThedUrbervilles.Analysis;
 
 namespace TessOfThedUrbervilles
 {
-    public class Sequence
+    public class Triad
     {
-
-        public string Triad { get; }
-        public List<Spacing> Spaces { get; }
+        public string Text { get;}
         
-        public Sequence(string triad)
-        {
-            Triad = triad;
-            Spaces = new List<Spacing>();
-        }
+        public char[] Characters { get; }
         
-    }
-    
-    public class Spacing
-    {
-        public int Space { get; }
-        public bool Mod4 { get; set; }
-        public bool Mod5 { get; set; }
-        public bool Mod6 { get; set; }
-
-        public Spacing(int space)
+        public int StartingIndex { get; }
+        
+        public Triad(char[] characters, int startingIndex)
         {
-            Space = space;
+            Characters = characters;
+            Text = new string(characters);
+            StartingIndex = startingIndex;
         }
-            
     }
     
     public static class VigenereCipher
     {
-        public static string DecryptWithKey(CharacterFrequency originalCharacterFrequency)
+
+        public static string DecryptWithKey(Text plainText)
         {
             const string key = "TESSOFTHEDURBERVILLES";
-            var text = File.ReadAllText("cexercise2.txt");
-            var characterFrequency = new CharacterFrequency(text);
-            
-            var keyArray = key.ToCharArray();
-            var offsetKeyArray = keyArray.Select(x => x - 65).ToArray();
+            var cipherTextString = File.ReadAllText("cexercise2.txt");
+            var cipherText = new Text(cipherTextString);
 
-            var decryptedCharArray = new char[characterFrequency.OriginalText.Length];
-            for (var i = 0; i < characterFrequency.OriginalText.Length; i++)
+            return DecryptWithKey(plainText, cipherText, key);
+        }
+
+        public static string DecryptWithoutKey(Text plainText, string file)
+        {
+            var cipherTextString = File.ReadAllText(file);
+            var cipherText = new Text(cipherTextString);
+
+            var allTriads = GenerateTriads(cipherText);
+            
+            var duplicateTriads = allTriads.GroupBy(x => x.Text).Where(x => x.Count() > 1).OrderByDescending(x => x.Count()).ToList();
+             
+            var spaces = GetTriadSpaces(duplicateTriads);
+
+            var keyLength = FindPossibleKeyLength(spaces);
+
+            var possibleKeys = FindPossibleKeys(plainText, duplicateTriads, keyLength);
+
+            foreach (var possibleKey in possibleKeys)
+            {
+                var decryptedText = DecryptWithKey(plainText, cipherText, possibleKey);
+                if (!decryptedText.Equals("Failed"))
+                    return decryptedText;
+            }
+            
+            return "Failed";
+        }
+
+        private static string DecryptWithKey(Text plainText, Text cipherText, string key)
+        {
+            var keyArray = key.ToCharArray();
+
+            var decryptedCharArray = new char[cipherText.OriginalText.Length];
+            for (var i = 0; i < cipherText.OriginalText.Length; i++)
             {
                 var keyIndex = i % (key.Length);
 
-                var decryptedChar = characterFrequency.Characters[i] - offsetKeyArray[keyIndex];
-                
-                decryptedCharArray[i] = WrapCharacter(decryptedChar);
+                decryptedCharArray[i] = GetPossibleCharacter(cipherText.Characters[i], keyArray[keyIndex]);
             }
             
             var decryptedString = new string(decryptedCharArray);
 
-            return originalCharacterFrequency.OriginalText.Contains(decryptedString) ? decryptedString.Substring(0, 30) : "Failed";
+            return plainText.OriginalText.Contains(decryptedString) ? decryptedString.Substring(0, 30) : "Failed";
         }
 
-        public static string DecryptWithoutKey(CharacterFrequency originalCharacterFrequency, string file)
+        private static List<Triad> GenerateTriads(Text text)
         {
-            var text = File.ReadAllText(file);
-            var characterFrequency = new CharacterFrequency(text);
+            var triads = new List<Triad>();
             
-            var sequences = new List<Sequence>();
-
-            // Loops through all possible triad in the text
-            for (var i = 0; i < characterFrequency.Characters.Length; i++)
+            // Loop through all possible triads in the text
+            for (var i = 0; i < text.Characters.Length; i++)
             {
-                // If there are no more triads then stop.
-                if (i + 3 > characterFrequency.Characters.Length - 1)
+                // If there are no more triads then stop
+                if (i + 3 > text.Characters.Length - 1)
                     break;
 
                 // Generate triad
-                var sequenceChars = new char[3];
-                sequenceChars[0] = characterFrequency.Characters[i];
-                sequenceChars[1] = characterFrequency.Characters[i + 1];
-                sequenceChars[2] = characterFrequency.Characters[i + 2];
-                
-                var sequenceString = new string(sequenceChars);
-                
-                // Generate a list of all of the triads that have been repeated.
-                // sequences.All... checks that we don't loop through triads spacings if it's already been done
-                if (sequences.All(x => x.Triad != sequenceString))
-                {
-                    // Find all the triads in the text 
-                    var matches = Regex.Matches(characterFrequency.OriginalText, sequenceString);
-                    
-                    // Only carry on if duplicates are found
-                    if (matches.Count > 1)
-                    {
-                        var sequence = new Sequence(sequenceString);
-                        sequences.Add(sequence);
-                        
-                        // Get the index of the first letter of the first triad duplicate
-                        var firstMatchIndex = matches[0].Index;
+                var triadCharacters = new char[3];
+                triadCharacters[0] = text.Characters[i];
+                triadCharacters[1] = text.Characters[i + 1];
+                triadCharacters[2] = text.Characters[i + 2];
 
-                        // Find spaces between the first triad and all other duplicate triads
-                        // matches.Count - 1 is used to ensure we stop searching once we reach the last triad.
-                        for (var j = 0; j < matches.Count - 1; j++)
-                        {
-                            var secondMatchIndex = matches[j + 1].Index;
-                            
-                            var spacing = secondMatchIndex - firstMatchIndex;
-
-                            var space = new Spacing(spacing);
-                            sequence.Spaces.Add(space);
-
-                        }
-                    }
-
-                }
+                triads.Add(new Triad(triadCharacters, i));
             }
 
-
-            // Find possible key length with modulo
-            foreach (var sequenceSpace in sequences.SelectMany(sequence => sequence.Spaces))
-            {
-                sequenceSpace.Mod4 = sequenceSpace.Space % 4 == 0;
-                sequenceSpace.Mod5 = sequenceSpace.Space % 5 == 0;
-                sequenceSpace.Mod6 = sequenceSpace.Space % 6 == 0;
-            }
-
-            // Find highest frequency
-            var frequencies = new Dictionary<int, int> {{4, 0}, {5, 0}, {6, 0}};
-
-            foreach (var sequenceSpace in sequences.SelectMany(sequence => sequence.Spaces))
-            {
-                if (sequenceSpace.Mod4)
-                    frequencies[4] = frequencies[4] + 1;                
-                if (sequenceSpace.Mod5)
-                    frequencies[5] = frequencies[5] + 1;                
-                if (sequenceSpace.Mod6)
-                    frequencies[6] = frequencies[6] + 1;                
-            }
-            
-            var keySize = frequencies.Aggregate((x, y) => x.Value > y.Value ? x : y).Key;           
-
-            // Split text into segments of the size of the key
-            var sequencesInOrder = sequences.OrderByDescending(x => x.Spaces.Count);
-
-            var keysForThe = new List<string>();
-            var keysForAnd = new List<string>();
-
-            foreach (var sequence in sequencesInOrder)
-            {
-                var sequenceCharArray = sequence.Triad.ToCharArray();
-
-                var firstChar = sequenceCharArray[0];
-                var secondChar = sequenceCharArray[1];
-                var thirdChar = sequenceCharArray[2];
-                
-                var possibleKeyOne = GetPossibleCharacter(firstChar, 'T');
-                var possibleKeyTwo =  GetPossibleCharacter(secondChar, 'H');
-                var possibleKeyThree = GetPossibleCharacter(thirdChar, 'E');
-                
-                var keyCharArray = new [] {possibleKeyOne, possibleKeyTwo, possibleKeyThree};
-                keysForThe.Add(new string(keyCharArray));
-                
-                possibleKeyOne = GetPossibleCharacter(firstChar, 'A');
-                possibleKeyTwo =  GetPossibleCharacter(secondChar, 'N');
-                possibleKeyThree = GetPossibleCharacter(thirdChar, 'D');
-
-                switch (keySize)
-                {
-                    case 4:
-                        keyCharArray = new [] {possibleKeyOne};
-                        break;
-                    case 5:
-                        keyCharArray = new [] {possibleKeyOne, possibleKeyTwo};
-                        break;
-                    default:
-                        keyCharArray = new [] {possibleKeyOne, possibleKeyTwo, possibleKeyThree};
-                        break;
-                }
-                
-                keysForAnd.Add(new string(keyCharArray));
-
-
-            }
-
-   
-            var possibleKeys = (from theKey in keysForThe from andKey in keysForAnd select theKey + andKey).ToList();
-            possibleKeys.AddRange((from theKey in keysForThe from andKey in keysForAnd select  andKey + theKey).ToList());
-            
-            var segments = GetSegments(characterFrequency.OriginalText, keySize);
-
-
-            foreach (var possibleKey in possibleKeys)
-            {
-                // Segment original text into key size.
-
-                var decrypted = "";
-                var keyIndex = 0;
-                foreach (var originalInSegment in segments)
-                {
-                    
-                    // Get array of characters
-                    decrypted += new string(GetPossibleCharacters(originalInSegment.ToCharArray(), possibleKey.ToCharArray()));
-                }
-
-                if (originalCharacterFrequency.OriginalText.Contains(decrypted))
-                    return decrypted.Substring(0, 30);
-
-            }
-
-            return "Failed";
+            return triads;
         }
 
-        private static List<string> GetSegments(string text, int keySize)
+        private static List<int> GetTriadSpaces(List<IGrouping<string, Triad>> groupedTriads)
         {
-            return text.Select((c, i) => new { Char = c, Index = i }).GroupBy(o => o.Index / keySize).Select(g => new string(g.Select(o => o.Char).ToArray())).ToList();
-        }
+            var spaces = new List<int>();
 
-
-        private static char[] GetPossibleCharacters(char[] encryptedCharArray, char[] keyCharArray)
-        {
-            var translatedBlock = new char[encryptedCharArray.Length];
-            for (var i = 0; i < encryptedCharArray.Length; i++)
+            foreach (var group in groupedTriads)
             {
-                translatedBlock[i] = GetPossibleCharacter(encryptedCharArray[i], keyCharArray[i]);
+                var triadsInGroup = group.Select(x => x).ToList();
+
+                // Find spaces between the first triad and all other duplicate triads
+                // matches.Count - 1 is used to ensure we stop searching once we reach the last triad.
+                for (var i = 1; i < triadsInGroup.Count; i++)
+                    spaces.Add(triadsInGroup[i].StartingIndex - triadsInGroup[0].StartingIndex);
+
             }
 
-            return translatedBlock;
+            return spaces;
         }
 
-        
+        private static int FindPossibleKeyLength(List<int>spaces)
+        {
+            var modFourOccurrences = 0;
+            var modFiveOccurrences = 0;
+            var modSixOccurrences = 0;
+
+            foreach (var space in spaces)
+            {
+                if (space % 4 == 0)
+                    modFourOccurrences++;
+                if (space % 5 == 0)
+                    modFiveOccurrences++;
+                if (space % 6 == 0)
+                    modSixOccurrences++;
+            }
+
+            var mostOccurred = Math.Max(modFourOccurrences, Math.Max(modFiveOccurrences, modSixOccurrences));
+            
+            if (mostOccurred == modFourOccurrences)
+                return 4;
+
+            return mostOccurred == modFiveOccurrences ? 5 : 6;
+        }
+
+        private static List<string> FindPossibleKeys(Text plantText, List<IGrouping<string, Triad>> cipherTextTriads, int keyLength)
+        {
+            var possibleKeysFirstSection = new List<string>();
+            var possibleKeysSecondSection = new List<string>();
+
+            var plainTextTriads = GenerateTriads(plantText);
+
+            var plainTextDuplicateTriads = plainTextTriads.GroupBy(x => x.Text).Where(x => x.Count() > 1).OrderByDescending(x => x.Count()).ToList();
+
+            var commonWordOne = plainTextDuplicateTriads[0].Key;
+            var commonWordTwo = plainTextDuplicateTriads[1].Key;
+
+            var triads = cipherTextTriads.SelectMany(x => x).ToList();
+
+            foreach (var triad in triads)
+            {
+                var keySectionOne = GetKeySection(triad, 3, commonWordOne);
+                var keySectionTwo = GetKeySection(triad, Math.Abs(3 - keyLength), commonWordTwo);
+            
+                possibleKeysFirstSection.Add(keySectionOne);
+                possibleKeysSecondSection.Add(keySectionTwo);
+            }
+
+            var possibleKeys = (from theKey in possibleKeysFirstSection from andKey in possibleKeysSecondSection select theKey + andKey).ToList();
+            possibleKeys.AddRange((from theKey in possibleKeysFirstSection from andKey in possibleKeysSecondSection select andKey + theKey).ToList());
+
+            return possibleKeys;
+        }
+
+        private static string GetKeySection(Triad cipherTextTriad, int sectionLength, string commonWord)
+        {
+            var keySection = new char[sectionLength];
+
+            for (int i = 0; i < sectionLength; i++)
+            {
+                keySection[i] = GetPossibleCharacter(cipherTextTriad.Characters[i], commonWord[i]);
+            }
+
+            return new string(keySection);
+
+        }
+
         private static char GetPossibleCharacter(char encryptedChar, char keyChar)
         {
             var difference = encryptedChar - keyChar;
