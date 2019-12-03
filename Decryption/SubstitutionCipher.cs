@@ -1,4 +1,7 @@
-using System;
+/*
+    Authors: Brandon (bo206), Emmanuel (es555)
+*/
+
 using System.IO;
 using System.Linq;
 using TessOfThedUrbervilles.Analysis;
@@ -14,10 +17,11 @@ namespace TessOfThedUrbervilles
 
             var decryptedText = cipherText.OriginalText.ToCharArray();
 
-            // Assume character that occurs the most is |, replace with a space for now
+            // Assume character that occurs the most is | as this represents punctuation / spaces, replace with a space for now.
             decryptedText = SubstituteCharacter(decryptedText, cipherText.MostFrequentCharacter, ' ');
 
-            // Assume the most common trigram is THE
+            // Assuming the spacing is correct, use it to find all of the trigrams
+            // in the text. Order them by the ones that occur that most.
             var decryptedSegments = new string(decryptedText).Split(' ');
             var trigrams = decryptedSegments
                 .Where(c => c.Length == 3)
@@ -28,14 +32,21 @@ namespace TessOfThedUrbervilles
                 .Where(x => x.Value > 1)
                 .Select(x => x.Key).ToList();
             
+            // Lowercase characters are used to make it easier when manually deciphering the text.
+            
+            // Assume the most occuring trigram is THE. 
             decryptedText = SubstituteCharacter(decryptedText, trigrams[0][0], 't');
             decryptedText = SubstituteCharacter(decryptedText, trigrams[0][1], 'h');
             decryptedText = SubstituteCharacter(decryptedText, trigrams[0][2], 'e');
             
+            // Assume the previous is correct and assume the next most occuring trigram is AND.
             decryptedText = SubstituteCharacter(decryptedText, trigrams[2][0], 'a');
             decryptedText = SubstituteCharacter(decryptedText, trigrams[2][1], 'n');
             decryptedText = SubstituteCharacter(decryptedText, trigrams[2][2], 'd');
             
+            // Previous assumption seems correct. Manually search the text for patters of other common words
+            // such as them. Use the fact that certain characters have already been used to guess potential words.
+            // Continue until entire text has been deciphered.
             decryptedText = SubstituteCharacter(decryptedText, '|', 'r');
             decryptedText = SubstituteCharacter(decryptedText, 'A', 'i');
             decryptedText = SubstituteCharacter(decryptedText, 'B', 'c');
@@ -56,8 +67,9 @@ namespace TessOfThedUrbervilles
             decryptedText = SubstituteCharacter(decryptedText, 'V', 'm');
             decryptedText = SubstituteCharacter(decryptedText, 'X', 'j');
             
+            // Replace the spaces with original | character and make all the characters upercase.
             var decryptedString = new string(decryptedText).Replace(' ', '|').ToUpper();
-            return plainText.OriginalText.Contains(decryptedString) ? decryptedString.Substring(0, 30) : "Failed";
+            return Helper.IsInPlainText(plainText, decryptedString);
         }
         
         

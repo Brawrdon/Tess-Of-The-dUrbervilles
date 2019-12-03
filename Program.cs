@@ -1,4 +1,8 @@
-﻿using System;
+﻿/*
+    Authors: Brandon (bo206), Emmanuel (es555)
+*/
+
+using System;
 using System.IO;
 using TessOfThedUrbervilles.Analysis;
 

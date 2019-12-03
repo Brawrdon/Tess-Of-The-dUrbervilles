@@ -1,3 +1,7 @@
+/*
+    Authors: Brandon (bo206)
+*/
+
 using System.IO;
 using System.Linq;
 using TessOfThedUrbervilles.Analysis;
@@ -6,43 +10,37 @@ namespace TessOfThedUrbervilles
 {
     public static class CaesarCipher
     {
-        // ASCII A = 65, Z = 90
-        public static string Decrypt(Text originalText)
+        public static string Decrypt(Text plainText)
         {
             var text = File.ReadAllText("cexercise1.txt");
             var characterFrequency = new Text(text);
 
+            // Find the most frequent character in the cipher text.
+            // Assumed to be E as that is the most common letter in the English language.
             int mostFrequentCharShifted = characterFrequency.MostFrequentCharacter;
-            
-            // Shift minus one letter until they are equal
+
+            // Keep track of the number of shifts.
             var shifts = 0;
+
+            // Shift the most frequent character in the cipher text by one until it matches the most frequent character
+            // in the plain text. The amount of shifts is used as an assumption for the rest of the cipher text.
             do
             {
                 mostFrequentCharShifted -= 1;
 
-                if (mostFrequentCharShifted == 64)
-                    mostFrequentCharShifted = 90;
+                // Chars are represented by their ASCII equivalent so they must be wrapped to ensure
+                // they stay within 65 - 90 (A - Z)
+                mostFrequentCharShifted = Helper.WrapCharacter(mostFrequentCharShifted);
 
                 shifts++;
-            } while (originalText.MostFrequentCharacter != mostFrequentCharShifted);
+            } while (plainText.MostFrequentCharacter != mostFrequentCharShifted);
 
-            
-            // Apply decrypt formula
-            var decryptedCharArray = characterFrequency.Characters.Select(x => WrapCharacter(x - (shifts % 26)) ).ToArray();
+
+            // Apply the formula to decrypt p = c − k mod 26 to every character in the cipher text
+            var decryptedCharArray = characterFrequency.Characters.Select(x => Helper.WrapCharacter(x - (shifts % 26))).ToArray();
             var decryptedString = new string(decryptedCharArray);
 
-            return originalText.OriginalText.Contains(decryptedString) ? decryptedString.Substring(0, 30) : "Failed";
+            return Helper.IsInPlainText(plainText, decryptedString);
         }
-        
-        private static char WrapCharacter(int character)
-        {
-            if (character < 65)
-                character += 26;
-
-            return (char) character;
-        }
-        
-        
-
     }
 }

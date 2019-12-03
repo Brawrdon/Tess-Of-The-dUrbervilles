@@ -1,10 +1,17 @@
-using System;
+/*
+    Authors: Brandon (bo206), Emmanuel (es555)
+*/
+
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 
 namespace TessOfThedUrbervilles.Analysis
 {
+    /// <summary>
+    /// The class to represent inputs from text files.
+    /// The class parses text files to produce an object that contains the original text,
+    /// the individual characters of the text and the amount of times characters appear.
+    /// </summary>
     public class Text
     {
         public string OriginalText { get; }

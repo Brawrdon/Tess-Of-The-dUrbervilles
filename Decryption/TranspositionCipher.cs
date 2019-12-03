@@ -1,5 +1,8 @@
+/*
+    Authors: Brandon (bo206)
+*/
+
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -9,11 +12,11 @@ namespace TessOfThedUrbervilles
 {
     public static class TranspositionCipher
     {
-
-        // If you don't the keysize and know the order, put in the right coloumn size then
-        // Know numb of chars in cipher text
-        // Divide by possible length of keysizes to get columns
-        // Read column downs to form english 
+        /// <summary>
+        /// Exercise 5.
+        /// </summary>
+        /// <param name="plainText"></param>
+        /// <returns></returns>
         public static string DecryptOrderKnown(Text plainText)
         {
             var cipherTextString = File.ReadAllText("cexercise5.txt");
@@ -21,6 +24,9 @@ namespace TessOfThedUrbervilles
 
             var possibleColumnSizes = new [] {4, 5, 6};
 
+            
+            // Brute force by attempting to split the cipher text into the possible column sizes.
+            // Read horizontally down the grid to generate the decrypted text.
             foreach (var possibleColumnSize in possibleColumnSizes)
             {
                 var decryptedText = "";
@@ -42,6 +48,11 @@ namespace TessOfThedUrbervilles
 
         }
         
+        /// <summary>
+        /// Exercise 6.
+        /// </summary>
+        /// <param name="plainText"></param>
+        /// <returns></returns>
         public static string DecryptOrderUnknown(Text plainText)
         {
             var cipherTextString = File.ReadAllText("cexercise6.txt");
@@ -49,10 +60,16 @@ namespace TessOfThedUrbervilles
             
             var decryptedText = "";
             float rowLength = cipherText.OriginalText.Length / 6;
+            
+            // Generate a grid of 6 columns and x amount of rows.
             var grid = GenerateGrid(cipherText.OriginalText, (int) Math.Ceiling(rowLength));
 
+            // Get all the possible permutations of the grids.
             var gridPermutations = GenerateGridPermutations(grid);
 
+            // Go through each permutation and attempt to decipher.
+            // One of the permutations will be in the order of the columns used
+            // to encrypt the text.
             foreach (var gridPermutation in gridPermutations)
             {
                 for (int i = 0; i < rowLength; i++)
@@ -69,6 +86,12 @@ namespace TessOfThedUrbervilles
             return "Failed";
         }
 
+        /// <summary>
+        /// Generates a string by reading down the grid at the specified column index.
+        /// </summary>
+        /// <param name="columnIndex"></param>
+        /// <param name="grid"></param>
+        /// <returns></returns>
         private static string ReadColumn(int columnIndex, IEnumerable<string> grid)
         {
             var text = "";
@@ -80,11 +103,23 @@ namespace TessOfThedUrbervilles
             return text;
         }
 
+        /// <summary>
+        /// Generate the grid.
+        /// </summary>
+        /// <param name="text"></param>
+        /// <param name="rowLength"></param>
+        /// <returns></returns>
         private static List<string> GenerateGrid(string text, int rowLength)
         {
             return text.Select((c, i) => new { Char = c, Index = i }).GroupBy(o => o.Index / rowLength).Select(g => new string(g.Select(o => o.Char).ToArray())).ToList();
         }
         
+        /// <summary>
+        /// Get all the possible permutations of the grid.
+        /// This creates all the possible orders (720).
+        /// </summary>
+        /// <param name="grid"></param>
+        /// <returns></returns>
         private static IEnumerable<IEnumerable<string>> GenerateGridPermutations(List<string> grid)
         {
             return GetPermutations(grid, 6).ToList();
@@ -92,10 +127,7 @@ namespace TessOfThedUrbervilles
 
         private static IEnumerable<IEnumerable<T>> GetPermutations<T>(IEnumerable<T> list, int length)
         {
-            return length == 1 ? list.Select(t => new T[] { t }) : GetPermutations(list, length - 1).SelectMany(t => list.Where(e => !t.Contains(e)),(t1, t2) => t1.Concat(new T[] { t2 }));
+            return length == 1 ? list.Select(x => new [] { x}) : GetPermutations(list, length - 1).SelectMany(x => list.Where(z => !x.Contains(z)),(x1, x2) => x1.Concat(new [] { x2 }));
         }
-
-
-        
     }
 }
