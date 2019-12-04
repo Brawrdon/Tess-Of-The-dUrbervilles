@@ -70,20 +70,26 @@ namespace TessOfThedUrbervilles
             // Go through each permutation and attempt to decipher.
             // One of the permutations will be in the order of the columns used
             // to encrypt the text.
+
+            var decryptedTexts = new List<string>();
             foreach (var gridPermutation in gridPermutations)
             {
                 for (int i = 0; i < rowLength; i++)
                 {
                     decryptedText += ReadColumn(i, gridPermutation);
                 }
-
-                if (plainText.OriginalText.Contains(decryptedText))
-                    return decryptedText.Substring(0, 30);;
+                
+                decryptedTexts.Add(decryptedText);
                 
                 decryptedText = "";
             }
+
+            var possibleDecryptedTexts = Helper.FindBasedOnWordOccurrence(decryptedTexts, "THE", 3);
             
-            return "Failed";
+            Console.WriteLine("Most likely decryption - " + possibleDecryptedTexts.First().Key.Substring(0, 30));
+
+            // The first most likely decryption has been manually checked and is in english.
+            return "(" + Helper.IsInPlainText(plainText, possibleDecryptedTexts.First().Key) + ")";
         }
 
         /// <summary>

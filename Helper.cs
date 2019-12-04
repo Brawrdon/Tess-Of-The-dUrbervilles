@@ -2,6 +2,9 @@
     Authors: Brandon (bo206), Emmanuel (es555)
 */
 
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
 using TessOfThedUrbervilles.Analysis;
 
 namespace TessOfThedUrbervilles
@@ -28,15 +31,37 @@ namespace TessOfThedUrbervilles
             return (char) character;
         }
 
+        public static Dictionary<string, int> FindBasedOnWordOccurrence(List<string> texts, string wordToFind, int minOccurrence)
+        {
+            var frequencies = new Dictionary<string, int>();
+            for (var index = 0; index < texts.Count; index++)
+            {
+                var text = texts[index];
+                var count = Regex.Matches(text, wordToFind).Count;
+                if (count >= minOccurrence)
+                {
+                    frequencies.TryAdd(text, count);
+                }
+            }
+
+            frequencies = frequencies.OrderByDescending(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
+
+            return frequencies;
+
+        }
+
         /// <summary>
-        /// Checks if the decrypted string exists in the plain text.
+        /// Helper to confirm the decrypted text found exists in the plain text.
+        /// This isn't used to just to search the text during decryption, it's used
+        /// to make it faster than continuously pressing CTRL+F so that the program can be run
+        /// automatically.
         /// </summary>
         /// <param name="plainText">The plain text.</param>
-        /// <param name="potentialDecryption">The string to check.</param>
+        /// <param name="expectedDecryption">The string to check.</param>
         /// <returns>Substring of the decrypted plain text or failed if it is incorrect.</returns>
-        public static string IsInPlainText(Text plainText, string potentialDecryption)
+        public static string IsInPlainText(Text plainText, string expectedDecryption)
         {
-            return plainText.OriginalText.Contains(potentialDecryption) ? potentialDecryption.Substring(0, 30) : "Failed";
+            return plainText.OriginalText.Contains(expectedDecryption) ? expectedDecryption.Substring(0, 30) : "Failed";
         }
         
     }

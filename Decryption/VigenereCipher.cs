@@ -65,16 +65,45 @@ namespace TessOfThedUrbervilles
             // Generate all the possible keys.
             var possibleKeys = FindPossibleKeys(groupedTrigrams, keyLength);
 
+            var decryptedTexts = new List<string>();
             // Attempt to decrypt the cipher keys which each of the generated keys.
             foreach (var possibleKey in possibleKeys)
             {
-                var decryptedText = DecryptWithKey(plainText, cipherText, possibleKey);
-                if (!decryptedText.Equals("Failed"))
-                    return decryptedText;
+                var decryptedText = DecryptWithKey(cipherText, possibleKey);
+                decryptedTexts.Add(decryptedText);
+            }
+
+            var possibleDecryptedTexts = Helper.FindBasedOnWordOccurrence(decryptedTexts, "THE", groupedTrigrams.First().Count());
+
+            Console.WriteLine("Most likely decryption - " + possibleDecryptedTexts.First().Key.Substring(0, 30));
+
+            // The first most likely decryption has been manually checked and is in english.
+            return "(" + Helper.IsInPlainText(plainText, possibleDecryptedTexts.First().Key) + ")";
+
+        }
+        
+        private static string DecryptWithKey(Text cipherText, string key)
+        {
+            // Separate the key into individual characters.
+            var keyArray = key.ToCharArray();
+
+            var decryptedCharArray = new char[cipherText.OriginalText.Length];
+            for (var i = 0; i < cipherText.OriginalText.Length; i++)
+            {
+                // Using modulo, wrap the index of the key character between 0 and the length of the key
+                // Equivalent to producing:
+                // Text: ABCDEFGHIJ
+                // Key:  HELLOHELLO
+                var keyIndex = i % (key.Length);
+
+                decryptedCharArray[i] = GetPlainTextCharacter(cipherText.Characters[i], keyArray[keyIndex]);
             }
             
-            return "Failed";
+            var decryptedString = new string(decryptedCharArray);
+
+            return decryptedString;
         }
+
 
         private static string DecryptWithKey(Text plainText, Text cipherText, string key)
         {

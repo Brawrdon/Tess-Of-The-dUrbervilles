@@ -36,12 +36,22 @@ namespace TessOfThedUrbervilles
 
             // Decrypt
             Console.WriteLine("Ceasear: " + CaesarCipher.Decrypt(tess26CharacterFrequency) + "\n");
-            Console.WriteLine("Vigenere With Key: " + VigenereCipher.DecryptWithKey(tess26CharacterFrequency) + "\n"); 
-            Console.WriteLine("Vigenere Without Key (Known Size of 6): " + VigenereCipher.DecryptWithoutKey(tess26CharacterFrequency, "cexercise3.txt") + "\n");
-            Console.WriteLine("Vigenere Without Key (Known Size of 4 - 6): " + VigenereCipher.DecryptWithoutKey(tess26CharacterFrequency, "cexercise4.txt") + "\n");
+            
+            Console.WriteLine("Vigenere With Key: " + VigenereCipher.DecryptWithKey(tess26CharacterFrequency) + "\n");
+
+            Console.WriteLine("Vigenere Without Key (Known Size of 6):");
+            Console.WriteLine(VigenereCipher.DecryptWithoutKey(tess26CharacterFrequency, "cexercise3.txt") + "\n");
+
+            Console.WriteLine("Vigenere Without Key (Known Size of 4 - 6):");
+            Console.WriteLine(VigenereCipher.DecryptWithoutKey(tess26CharacterFrequency, "cexercise4.txt") + "\n");
+
             Console.WriteLine("Transposition (Known Size of 4 - 6, Order Known): " + TranspositionCipher.DecryptOrderKnown(tess26CharacterFrequency) + "\n");
-            Console.WriteLine("Transposition (Known Size of 6, Order Unknown): " + TranspositionCipher.DecryptOrderUnknown(tess26CharacterFrequency) + "\n");
-            Console.WriteLine("Substitution: " + SubstitutionCipher.Decrypt(tess27CharacterFrequency));
+            
+            Console.WriteLine("Transposition (Known Size of 6, Order Unknown):");
+            Console.WriteLine(TranspositionCipher.DecryptOrderUnknown(tess26CharacterFrequency) + "\n");
+
+            Console.WriteLine("Substitution:");
+            Console.WriteLine(SubstitutionCipher.Decrypt(tess27CharacterFrequency));
         }
         
     }

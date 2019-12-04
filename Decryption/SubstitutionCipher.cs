@@ -2,6 +2,7 @@
     Authors: Brandon (bo206), Emmanuel (es555)
 */
 
+using System;
 using System.IO;
 using System.Linq;
 using TessOfThedUrbervilles.Analysis;
@@ -67,9 +68,13 @@ namespace TessOfThedUrbervilles
             decryptedText = SubstituteCharacter(decryptedText, 'V', 'm');
             decryptedText = SubstituteCharacter(decryptedText, 'X', 'j');
             
-            // Replace the spaces with original | character and make all the characters upercase.
+            // Replace the spaces with original | character and make all the characters uppercase.
             var decryptedString = new string(decryptedText).Replace(' ', '|').ToUpper();
-            return Helper.IsInPlainText(plainText, decryptedString);
+            
+            // Print potential decryption.
+            Console.WriteLine(decryptedString);
+            
+            return "(" + Helper.IsInPlainText(plainText, decryptedString) + ")";
         }
         
         
